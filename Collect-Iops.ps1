@@ -18,7 +18,12 @@ param
 
 $vcenterIp = "10.0.0.101"
 $userName = 'administrator@vsphere.local'
-$consoleOut = $false
+$consoleOut = $true
+$samples = 6  # VMware collects samples every 20 sec
+# 1 Minute = 3
+# 1 Hour = 180
+# 1 Day = 4320
+
 
 if ([string]::IsNullOrEmpty($vmName))
 {
@@ -27,11 +32,6 @@ if ([string]::IsNullOrEmpty($vmName))
     exit(1)
 }
 
-# VMware collects samples every 20 sec
-$samples = 30
-# 1 Minute = 3
-# 1 Hour = 180
-# 1 Day = 4320
 
 $csvFile = "Collected-IOPS-$($vmName)-$(Get-Date -format yyyyMMdd).csv"
 
@@ -72,7 +72,7 @@ For ($i = 1; $i -le $samples; $i += 1)
     $stats = Get-Stat -Realtime -Stat $metrics -Entity $vmObj -MaxSamples 1
     $interval = $stats[0].IntervalSecs
 
-    Write-Host "$(Get-Date -Format G): ... collecting sample: $i"
+    Write-Host "$(Get-Date -Format G): => collecting sample: $i" -NoNewline
 
     $collected = $stats | Group-Object -Property MetricId
 
@@ -81,7 +81,11 @@ For ($i = 1; $i -le $samples; $i += 1)
 
     if ($consoleOut)
     {
-        Write-Host "IOPS read: $($readiops), write: $($writeiops)"
+        Write-Host ", IOPS read: $($readiops), write: $($writeiops)"
+    }
+    else
+    {
+        Write-Host
     }
 
     $timestamp = $collected.Group | Group-Object -Property Timestamp
